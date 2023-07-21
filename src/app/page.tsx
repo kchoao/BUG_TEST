@@ -47,7 +47,7 @@ export default function Home() {
 
   //fetch data from API
   useEffect(()=>{
-    fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/customer`)
+    fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/customer`)
       .then((res)=>res.json())
       .then((res)=>res.data as Customer[])
       .then((data)=>{
