@@ -1,7 +1,6 @@
 
-## OnTheList Assessment
+## OnTheList Assessment - Bobby Ho
 
-### Bobby Ho
 [**Live Demo →**](https://bug-test-one.vercel.app/)
 
 ## Getting Started
