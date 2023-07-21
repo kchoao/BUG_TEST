@@ -1,91 +1,113 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from './page.module.css'
+"use client";
 
-const inter = Inter({ subsets: ['latin'] })
+import styles from "./page.module.css";
+import {
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+} from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
+import { Customer } from "./type";
+
+//helper function for calculate quotient and remainder
+const divmod = (x: number, y: number): number[] => [Math.floor(x / y), x % y];
 
 export default function Home() {
+
+  const limit = 10;
+  const MIN_PAGE = 0
+
+  //All the customer data
+  const [customerData, setCustomerData] = useState<Customer[]>([]);
+  //Limited number of data based on current page
+  const [rows, setRows] = useState<Customer[]>([]);
+  const [currentPage, setCurrentPage] = useState(MIN_PAGE);
+
+  //find quotient and remainder
+  const [quotient, remainder] = divmod(customerData.length, limit);
+  //calculate max page number
+  const MAX_PAGE = remainder === 0 ? quotient-1 : quotient
+
+
+  //current page number + 1
+  const incrementPage = useCallback(() => {
+    if(currentPage === MAX_PAGE) return
+    setCurrentPage(prev=>prev+1)
+  }, [currentPage]);
+
+  //current page number - 1
+  const decrementPage = useCallback(() => {
+    if(currentPage === MIN_PAGE) return
+    setCurrentPage(prev=>prev-1)
+  }, [currentPage]);
+
+  //fetch data from API
+  useEffect(()=>{
+    fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/customer`)
+      .then((res)=>res.json())
+      .then((res)=>res.data as Customer[])
+      .then((data)=>{
+        setCustomerData(data)
+        //set default row data
+        setRows(data.slice(0, limit))
+      })
+      .catch(err=> { throw new Error(err) } )
+    setRows(customerData.slice(0, limit));
+  },[])
+
+  //if current page change, change the row data
+  useEffect(() => {
+    const start = limit * currentPage;
+    const end = start + limit;
+    setRows(customerData.slice(start, end));
+  }, [currentPage])
+
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      <div>
+        <div style={{ minHeight: '350px' }}>
+          {rows && (
+            <TableContainer component={Paper}>
+              <Table
+                sx={{ minWidth: 650 }}
+                size="small"
+                aria-label="a dense table"
+              >
+                <TableBody>
+                  {rows.map((row: Customer) => (
+                    <TableRow
+                      key={row.id}
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 }}}
+                    >
+                      <TableCell>{row.id}</TableCell>
+                      <TableCell>{row.name}</TableCell>
+                      <TableCell>{row.value}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          {MAX_PAGE>MIN_PAGE && <Button
+            variant="text"
+            onClick={decrementPage}
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+            Previous Page
+          </Button>}
+          {MAX_PAGE>MIN_PAGE && <Button
+            variant="text"
+            onClick={incrementPage}
+          >
+            Next Page
+          </Button>}
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
-        </div>
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
       </div>
     </main>
-  )
+  );
 }
